@@ -1,7 +1,6 @@
 require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
 
-// Получение токена из .env
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 if (!BOT_TOKEN) {
@@ -12,16 +11,37 @@ if (!BOT_TOKEN) {
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// Команда /start
-bot.start((ctx) => {
+// Функция для создания клавиатуры
+function createMainKeyboard() {
+  return Markup.keyboard([
+    [{ text: "/start ▶️" }],
+    [{ text: "ℹ️ Информация" }, { text: "📄 Помощь" }],
+  ])
+    .resize() // Уменьшаем размер кнопок
+    .oneTime(); // Клавиатура исчезнет после первого нажатия
+}
+
+bot.start(async (ctx) => {
+  const userData = {
+    id: ctx.from.id,
+    first_name: ctx.from.first_name || "",
+    last_name: ctx.from.last_name || "",
+    username: ctx.from.username || "",
+    language_code: ctx.from.language_code || "",
+  };
+
+  const tgWebAppData = encodeURIComponent(JSON.stringify(userData));
+  const link = `https://host-ten-sandy.vercel.app/?tgWebAppData=${tgWebAppData}`;
+
   ctx.reply(
     `Привет, ${
       ctx.from.first_name || "пользователь"
-    }! Добро пожаловать в Task Manager Bot!`,
-    Markup.keyboard([["📄 Помощь", "ℹ️ Информация"]])
-      .resize()
-      .oneTime()
+    }! Добро пожаловать в Task Manager Bot! Нажмите на кнопку ниже, чтобы открыть Mini App.`,
+    Markup.inlineKeyboard([Markup.button.webApp("Открыть приложение", link)])
   );
+
+  // Отправляем клавиатуру
+  ctx.reply("Выберите действие:", createMainKeyboard());
 });
 
 // Обработка кнопки "Помощь"
